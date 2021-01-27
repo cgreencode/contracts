@@ -1,8 +1,3 @@
-/**
- *Submitted for verification at Etherscan.io on 2021-01-19
- Current Version: https://etherscan.io/address/0x5c1009674ae77cb9d92e47d1bd4c10a8eaf5adf0
-*/
-
 
 /*
 _____  _
@@ -266,7 +261,7 @@ contract WrapAndUnWrap{
         if(fee>0){
             uint256 totalFee = (thisBalance.mul(fee)).div(10000);
             if(totalFee >0){
-                dToken.transfer(owner, totalFee);
+                lpToken.transfer(owner, totalFee);
             }
             thisBalance =lpToken.balanceOf(address(this));
             lpToken.transfer(msg.sender, thisBalance);
@@ -605,11 +600,6 @@ contract WrapAndUnWrap{
   function setMaxFee(uint256 newMax) public onlyOwner returns (bool){
     require(maxfee==0, "Admin can only set max fee once and it is perm");
     maxfee = newMax;
-    return true;
-  }
-
-  function changeOwner(address payable newOwner) onlyOwner public returns (bool){
-    owner = newOwner;
     return true;
   }
 
