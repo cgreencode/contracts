@@ -1,6 +1,6 @@
 // Aave AToken Deposit (Converts from regular token to aToken, stores in this contract, and withdraws based on percentage of pool)
 pragma solidity >=0.4.22 <0.8.0;
-//This contract will not support rebasing tokens
+
 interface ERC20 {
     function totalSupply() external view returns(uint supply);
 
@@ -72,8 +72,8 @@ contract Tier2FarmController{
 
   address payable public owner;
   address payable public admin;
-  //address public platformToken = 0x25550Cccbd68533Fa04bFD3e3AC4D09f9e00Fc50;
-  //address public tokenStakingContract = 0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9;
+  address public platformToken = 0x25550Cccbd68533Fa04bFD3e3AC4D09f9e00Fc50;
+  address public tokenStakingContract = 0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9;
   address ETH_TOKEN_ADDRESS  = address(0x0);
   mapping (string => address) public stakingContracts;
   mapping (address => address) public tokenToFarmMapping;
@@ -110,7 +110,12 @@ contract Tier2FarmController{
 
 
   constructor() public payable {
-
+        stakingContracts["DAI"] =0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9 ;
+        stakingContracts["ALL"] =0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9 ;
+        stakingContractsStakingToken ["DAI"] = 0x25550Cccbd68533Fa04bFD3e3AC4D09f9e00Fc50;
+        tokenToAToken[0x6B175474E89094C44Da98b954EedeAC495271d0F]= 0x25550Cccbd68533Fa04bFD3e3AC4D09f9e00Fc50;
+        aTokenToToken[0x25550Cccbd68533Fa04bFD3e3AC4D09f9e00Fc50]= 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        tokenToFarmMapping[stakingContractsStakingToken ["DAI"]] =  stakingContracts["DAI"];
         owner= msg.sender;
         admin = msg.sender;
 
@@ -140,7 +145,6 @@ function updateATokens(address tokenAddress, address aTokenAddress) public onlyA
   }
 
   function updateCommission(uint amount) public onlyOwner returns(bool){
-      require(amount < 2000, "Commission too high");
       commission = amount;
       return true;
   }
@@ -157,8 +161,7 @@ function updateATokens(address tokenAddress, address aTokenAddress) public onlyA
 
         uint256 approvedAmount = thisToken.allowance(address(this), tokenToFarmMapping[tokenAddress]);
         if(approvedAmount < amount  ){
-            thisToken.approve(tokenToFarmMapping[tokenAddress], 0);
-            thisToken.approve(tokenToFarmMapping[tokenAddress], amount.mul(100));
+            thisToken.approve(tokenToFarmMapping[tokenAddress], amount.mul(10000000));
         }
         stake(amount, onBehalfOf, tokenAddress );
 
@@ -169,9 +172,7 @@ function updateATokens(address tokenAddress, address aTokenAddress) public onlyA
    }
 
    function stake(uint256 amount, address onBehalfOf, address tokenAddress) internal returns(bool){
-      ERC20 tokenStaked = ERC20(tokenAddress);
-      tokenStaked.approve(tokenToFarmMapping[tokenAddress], 0);
-      tokenStaked.approve(tokenToFarmMapping[tokenAddress], amount.mul(2));
+
       StakingInterface staker  = StakingInterface(tokenToFarmMapping[tokenAddress]);
       staker.deposit(tokenAddress, amount, address(this), 0);
       return true;
@@ -205,6 +206,16 @@ function updateATokens(address tokenAddress, address aTokenAddress) public onlyA
 
       ERC20 thisToken = ERC20(tokenAddress);
       //uint256 numberTokensPreWithdrawal = getStakedBalance(address(this), tokenAddress);
+
+        if(tokenAddress == 0x0000000000000000000000000000000000000000){
+            require(depositBalances[msg.sender][tokenAddress] >= amount, "You didnt deposit enough eth");
+
+            totalAmountStaked[tokenAddress] = totalAmountStaked[tokenAddress].sub(depositBalances[onBehalfOf][tokenAddress]);
+            depositBalances[onBehalfOf][tokenAddress] = depositBalances[onBehalfOf][tokenAddress]  - amount;
+            onBehalfOf.send(amount);
+            return true;
+
+        }
 
 
         require(depositBalances[onBehalfOf][tokenAddress] > 0, "You dont have any tokens deposited");
@@ -294,6 +305,11 @@ function updateATokens(address tokenAddress, address aTokenAddress) public onlyA
 
 
 
+ function kill() virtual public onlyOwner {
+
+         selfdestruct(owner);
+
+ }
 
 
     event Deposit(address indexed user, uint256 amount, address token);
