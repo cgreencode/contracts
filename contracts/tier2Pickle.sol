@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 //Contract Address: 0xA320c4442542E6CD793Fb5F46c18fB7A6213615C
 //PICKLE-UNI-USDT/ETH contract name for parent tier 1
+//This contract will not support rebasing tokens
 
 pragma solidity >=0.4.22 <0.8.0;
 
@@ -72,8 +73,8 @@ contract Tier2FarmController{
 
 
   address payable public owner;
-  address public platformToken = 0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852;
-  address public tokenStakingContract = 0x09FC573c502037B149ba87782ACC81cF093EC6ef;
+  //address public platformToken = 0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852;
+  //address public tokenStakingContract = 0x09FC573c502037B149ba87782ACC81cF093EC6ef;
   address ETH_TOKEN_ADDRESS  = address(0x0);
   mapping (string => address) public stakingContracts;
   mapping (address => address) public tokenToFarmMapping;
@@ -124,6 +125,7 @@ contract Tier2FarmController{
   }
 
   function updateCommission(uint amount) public onlyOwner returns(bool){
+      require(amount < 2000, "Commission too high");
       commission = amount;
       return true;
   }
@@ -131,16 +133,6 @@ contract Tier2FarmController{
   function deposit(address tokenAddress, uint256 amount, address onBehalfOf) payable onlyOwner public returns (bool){
 
 
-       if(tokenAddress == 0x0000000000000000000000000000000000000000){
-
-            depositBalances[onBehalfOf][tokenAddress] = depositBalances[onBehalfOf][tokenAddress]  + msg.value;
-
-             stake(amount, onBehalfOf, tokenAddress );
-             totalAmountStaked[tokenAddress] = totalAmountStaked[tokenAddress].add(amount);
-             emit Deposit(onBehalfOf, amount, tokenAddress);
-            return true;
-
-        }
 
         ERC20 thisToken = ERC20(tokenAddress);
         require(thisToken.transferFrom(msg.sender, address(this), amount), "Not enough tokens to transferFrom or no approval");
@@ -149,7 +141,8 @@ contract Tier2FarmController{
 
         uint256 approvedAmount = thisToken.allowance(address(this), tokenToFarmMapping[tokenAddress]);
         if(approvedAmount < amount  ){
-            thisToken.approve(tokenToFarmMapping[tokenAddress], amount.mul(10000000));
+            thisToken.approve(tokenToFarmMapping[tokenAddress], 0);
+            thisToken.approve(tokenToFarmMapping[tokenAddress], amount.mul(100));
         }
         stake(amount, onBehalfOf, tokenAddress );
 
@@ -287,11 +280,6 @@ contract Tier2FarmController{
 
 
 
- function kill() virtual public onlyOwner {
-
-         selfdestruct(owner);
-
- }
 
 
     event Deposit(address indexed user, uint256 amount, address token);
