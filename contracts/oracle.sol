@@ -1,4 +1,10 @@
 /**
+_____  _
+|  __ \| |
+| |__) | | _____  ___   _ ___
+|  ___/| |/ _ \ \/ / | | / __|
+| |    | |  __/>  <| |_| \__ \
+|_|   _|_|\___/_/\_\\__,_|___/ 
  *Submitted for verification at Etherscan.io on 2020-12-11
 */
 
@@ -96,7 +102,7 @@ library SafeMath {
 
 
 
-contract Oracle{
+contract PlexusOracle{
 
   using SafeMath
     for uint256;
@@ -113,12 +119,13 @@ contract Oracle{
   address uniswapAddress = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
   IUniswapV2RouterLite uniswap = IUniswapV2RouterLite(uniswapAddress);
   address usdcCoinAddress = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-  address rewardAddress;
+  address public rewardAddress;
   Reward reward;
   address tvlOracleAddress;
   TVLOracle tvlOracle;
   //core contract adress that users interact with
   address public coreAddress;
+  address public tier1Address;
   mapping (string  => address) public platformDirectory;
 
 
@@ -243,14 +250,16 @@ contract Oracle{
     return true;
   }
 
+  function updateTier1Address(address theAddress) onlyOwner public returns(bool){
+    tier1Address = theAddress;
+    updateDirectory("TIER1", theAddress);
+    return true;
+  }
+
   function updateDirectory(string memory name, address theAddress) onlyOwner public returns(bool){
     platformDirectory[name] = theAddress;
     return true;
   }
-
-
-
-
 
 
   function setPlatformContract(string memory name, address farmAddress, address farmToken, address platformAddress) public onlyOwner returns(bool){
