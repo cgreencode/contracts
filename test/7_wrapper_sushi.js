@@ -47,7 +47,6 @@ describe('Re-deploying the plexus contracts for WrapperSushi test', () => {
      it('Should convert 2 ETH to Farm token from harvest.finance via Sushiswap', async () => {
 
         const zeroAddress = process.env.ZERO_ADDRESS;
-        const userSlippageTolerance = process.env.SLIPPAGE_TOLERANCE;
         const erc20 = new ethers.Contract(farmTokenAddress, abi, provider);
   
         // Please note, the number of farm tokens we want to get doesn't matter, so the unit amount is just a placeholder
@@ -59,7 +58,7 @@ describe('Re-deploying the plexus contracts for WrapperSushi test', () => {
         };
   
         // Convert the 2 ETH to Farm Token(s)
-        const { status } = await (await wrapperSushi.wrap(zeroAddress, [farmTokenAddress], amountPlaceholder, userSlippageTolerance, overrides)).wait();
+        const { status } = await (await wrapperSushi.wrap(zeroAddress, [farmTokenAddress], amountPlaceholder, overrides)).wait();
   
         // Check if the txn is successful
         expect(status).to.equal(1);
@@ -85,7 +84,6 @@ describe('Re-deploying the plexus contracts for WrapperSushi test', () => {
       it('Should convert 2 ETH to DAI Token(s) from MakerDao via Sushiswap', async () => {
   
         const zeroAddress = process.env.ZERO_ADDRESS;
-        const userSlippageTolerance = process.env.SLIPPAGE_TOLERANCE;
         const erc20 = new ethers.Contract(daiTokenAddress, abi, provider);
   
         // Please note, the number of dai tokens we want to get doesn't matter, so the unit amount is just a placeholder
@@ -97,7 +95,7 @@ describe('Re-deploying the plexus contracts for WrapperSushi test', () => {
         };
   
         // Convert the 2 ETH to Dai Token(s)
-        const { status } = await (await wrapperSushi.wrap(zeroAddress, [daiTokenAddress], amountPlaceholder, userSlippageTolerance, overrides)).wait();
+        const { status } = await (await wrapperSushi.wrap(zeroAddress, [daiTokenAddress], amountPlaceholder, overrides)).wait();
   
         // Check if the txn is successful
         expect(status).to.equal(1);
@@ -123,7 +121,6 @@ describe('Re-deploying the plexus contracts for WrapperSushi test', () => {
       it('Should convert 2 ETH to Pickle Token(s) via Sushiswap', async () => {
   
         const zeroAddress = process.env.ZERO_ADDRESS;
-        const userSlippageTolerance = process.env.SLIPPAGE_TOLERANCE;
         const erc20 = new ethers.Contract(pickleTokenAddress, abi, provider);
   
         // Please note, the number of pickle tokens we want to get doesn't matter, so the unit amount is just a placeholder
@@ -135,7 +132,7 @@ describe('Re-deploying the plexus contracts for WrapperSushi test', () => {
         };
   
         // Convert the 2 ETH to Pickle Token(s)
-        const { status } = await (await wrapperSushi.wrap(zeroAddress, [pickleTokenAddress], amountPlaceholder, userSlippageTolerance, overrides)).wait();
+        const { status } = await (await wrapperSushi.wrap(zeroAddress, [pickleTokenAddress], amountPlaceholder, overrides)).wait();
   
         // Check if the txn is successful
         expect(status).to.equal(1);

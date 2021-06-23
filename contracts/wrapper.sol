@@ -123,8 +123,7 @@ contract WrapAndUnWrap is OwnableUpgradeable {
     function wrap(
         address sourceToken,
         address[] memory destinationTokens,
-        uint256 amount,
-        uint256 userSlippageTolerance
+        uint256 amount
     ) public payable returns (address, uint256) {
         IERC20 sToken = IERC20(sourceToken);
         IERC20 dToken = IERC20(destinationTokens[0]);
@@ -140,7 +139,7 @@ contract WrapAndUnWrap is OwnableUpgradeable {
                 }
             }
 
-            conductUniswap(sourceToken, destinationTokens[0], amount, userSlippageTolerance);
+            conductUniswap(sourceToken, destinationTokens[0], amount);
             uint256 thisBalance = dToken.balanceOf(address(this));
             dToken.transfer(msg.sender, thisBalance);
             return (destinationTokens[0], thisBalance);
@@ -171,20 +170,19 @@ contract WrapAndUnWrap is OwnableUpgradeable {
             if (destinationTokens[1] == ETH_TOKEN_ADDRESS) {
                 destinationTokens[1] = WETH_TOKEN_ADDRESS;
             }
+
             if (sourceToken != destinationTokens[0]) {
                 conductUniswap(
                     sourceToken,
                     destinationTokens[0],
-                    amount.div(2),
-                    userSlippageTolerance
+                    amount.div(2)
                 );
             }
             if (sourceToken != destinationTokens[1]) {
                 conductUniswap(
                     sourceToken,
                     destinationTokens[1],
-                    amount.div(2),
-                    userSlippageTolerance
+                    amount.div(2)
                 );
             }
 
@@ -274,8 +272,7 @@ contract WrapAndUnWrap is OwnableUpgradeable {
     function unwrap(
         address sourceToken,
         address destinationToken,
-        uint256 amount,
-        uint256 userSlippageTolerance
+        uint256 amount
     ) public payable returns (uint256) {
         address originalDestinationToken = destinationToken;
         IERC20 sToken = IERC20(sourceToken);
@@ -327,17 +324,14 @@ contract WrapAndUnWrap is OwnableUpgradeable {
                 conductUniswap(
                     lpTokenAddressToPairs[sourceToken][0],
                     destinationToken,
-                    pTokenBalance,
-                    userSlippageTolerance
+                    pTokenBalance
                 );
             }
-
             if (lpTokenAddressToPairs[sourceToken][1] != destinationToken) {
                 conductUniswap(
                     lpTokenAddressToPairs[sourceToken][1],
                     destinationToken,
-                    pTokenBalance2,
-                    userSlippageTolerance
+                    pTokenBalance2
                 );
             }
 
@@ -373,7 +367,7 @@ contract WrapAndUnWrap is OwnableUpgradeable {
                 sToken.approve(uniAddress, amount.mul(3));
             }
             if (sourceToken != destinationToken) {
-                conductUniswap(sourceToken, destinationToken, amount, userSlippageTolerance);
+                conductUniswap(sourceToken, destinationToken, amount);
             }
             uint256 destinationTokenBalance = dToken.balanceOf(address(this));
             dToken.transfer(msg.sender, destinationTokenBalance);
@@ -396,8 +390,7 @@ contract WrapAndUnWrap is OwnableUpgradeable {
     function conductUniswap(
         address sellToken,
         address buyToken,
-        uint256 amount,
-        uint256 userSlippageTolerance
+        uint256 amount
     ) internal returns (uint256 amounts1) {
         if (sellToken == ETH_TOKEN_ADDRESS && buyToken == WETH_TOKEN_ADDRESS) {
             wethToken.deposit{value: msg.value}();
@@ -406,29 +399,28 @@ contract WrapAndUnWrap is OwnableUpgradeable {
             address[] memory addresses = getBestPath(WETH_TOKEN_ADDRESS, buyToken, amount);
             // addresses[0] = WETH_TOKEN_ADDRESS;
             // addresses[1] = buyToken;
-            uint256 amountOutMin = getAmountOutMin(addresses, amount, userSlippageTolerance);
             uniswapExchange.swapExactETHForTokens{value: msg.value}(
-                amountOutMin,
+                0,
                 addresses,
                 address(this),
                 1000000000000000
             );
         } else if (sellToken == WETH_TOKEN_ADDRESS) {
             wethToken.withdraw(amount);
+
             // address [] memory addresses = new address[](2);
             address[] memory addresses = getBestPath(WETH_TOKEN_ADDRESS, buyToken, amount);
             // addresses[0] = WETH_TOKEN_ADDRESS;
             // addresses[1] = buyToken;
-            uint256 amountOutMin = getAmountOutMin(addresses, amount, userSlippageTolerance);
             uniswapExchange.swapExactETHForTokens{value: amount}(
-                amountOutMin,
+                0,
                 addresses,
                 address(this),
                 1000000000000000
             );
         } else {
             address[] memory addresses = getBestPath(sellToken, buyToken, amount);
-            uint256 [] memory amounts = conductUniswapT4T(addresses, amount, userSlippageTolerance);
+            uint256[] memory amounts = conductUniswapT4T(addresses, amount);
             uint256 resultingTokens = amounts[amounts.length - 1];
             return resultingTokens;
         }
@@ -532,24 +524,16 @@ contract WrapAndUnWrap is OwnableUpgradeable {
         }
     }
 
-    function getAmountOutMin(address  [] memory theAddresses, uint256 amount, uint256 userSlippageTolerance) public view returns (uint256) {
-        uint256 [] memory assetAmounts = getPriceFromUniswap(theAddresses, amount);
-        require(userSlippageTolerance <= 100, 'userSlippageTolerance can not be larger than 100');
-        return SafeMath.div(SafeMath.mul(assetAmounts[1], (100 - userSlippageTolerance)), 100);
-    }
-
-    function conductUniswapT4T(address[] memory theAddresses, uint256 amount, uint256 userSlippageTolerance) internal returns (uint256[] memory amounts1) {
+    function conductUniswapT4T(address[] memory theAddresses, uint256 amount) internal returns (uint256[] memory amounts1) {
         uint256 deadline = 1000000000000000;
-        uint256 amountOutMin = getAmountOutMin(theAddresses, amount, userSlippageTolerance);
         uint256[] memory amounts =
             uniswapExchange.swapExactTokensForTokens(
                 amount,
-                amountOutMin,
+                0,
                 theAddresses,
                 address(this),
                 deadline
             );
-
         return amounts;
     }
 
