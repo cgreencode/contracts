@@ -14,6 +14,8 @@ describe('Re-deploying the plexus contracts for WrapperSushi add liquidity test'
   let network = 'unknown';
   let tokenPairAddress = '';
   let daiTokenAddress;
+  let farmTokenAddress;
+  let pickleTokenAddress;
   let sushiTokenAddress;
   let compoundTokenAddress;
   let wethAddress;
@@ -45,7 +47,7 @@ describe('Re-deploying the plexus contracts for WrapperSushi add liquidity test'
       it('Should convert 2 ETH to DAI Token(s) from MakerDao via SushiSwap', async () => {
 
           const zeroAddress = process.env.ZERO_ADDRESS;
-          const userSlippageTolerance = config.userSlippageTolerance;
+          const userSlippageTolerance = process.env.SLIPPAGE_TOLERANCE;
           const daiToken = new ethers.Contract(daiTokenAddress, abi, provider);
 
           // Please note, the number of dai tokens we want to get doesn't matter, so the unit amount is just a placeholder
@@ -83,7 +85,7 @@ describe('Re-deploying the plexus contracts for WrapperSushi add liquidity test'
       });
 
       it('Should create pool(SUSHI-COMPOUND) with DAI via UniswapV2', async () => {
-          const userSlippageTolerance = config.userSlippageTolerance;
+          const userSlippageTolerance = process.env.SLIPPAGE_TOLERANCE;
           let daiToken = new ethers.Contract(daiTokenAddress, abi, provider);
 
           const initDaiBalance = Number(ethers.utils.formatUnits(await daiToken.balanceOf(owner.address), `ether`));
@@ -123,7 +125,7 @@ describe('Re-deploying the plexus contracts for WrapperSushi add liquidity test'
       });
 
       it('Should return DAI from pool when unwrap with token pair via SushiSwap', async () => {
-          const userSlippageTolerance = config.userSlippageTolerance;
+          const userSlippageTolerance = process.env.SLIPPAGE_TOLERANCE;
           let daiToken = new ethers.Contract(daiTokenAddress, abi, provider);
           let lpToken = new ethers.Contract(tokenPairAddress, abi, provider);
           lpToken = await lpToken.connect(owner);
@@ -133,7 +135,7 @@ describe('Re-deploying the plexus contracts for WrapperSushi add liquidity test'
           // Convert the 1000 DAI to SUSHI and COMPOUND, create pool with token pair(SUSHI-COMPOUND)
           const deadline = Math.floor(new Date().getTime() / 1000) + 10;
           const paths = [[sushiTokenAddress, wethAddress, daiTokenAddress], [compoundTokenAddress, wethAddress, daiTokenAddress]];
-          const { status, events } = await (await wrapperSushi.unwrap(tokenPairAddress, daiTokenAddress, paths, amountPlaceholder, userSlippageTolerance, deadline)).wait();
+          const { status, events } = await (await wrapperSushi.unwrap(tokenPairAddress, daiTokenAddress, tokenPairAddress, paths, amountPlaceholder, userSlippageTolerance, deadline)).wait();
 
           // Check if the txn is successful
           expect(status).to.equal(1);
